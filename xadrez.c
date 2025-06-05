@@ -4,19 +4,90 @@
 
 #include <SDL.h>
 
-int board[8][8] = {
-     1, 2, 3, 5, 4, 3, 2, 1,
-     6, 6, 6, 6, 6, 6, 6, 6,
-     0, 0, 0, 0, 0, 0, 0, 0,
-     0, 0, 0, 0, 0, 0, 0, 0,
-     0, 0, 0, 0, 0, 0, 0, 0,
-     0, 0, 0, 0, 0, 0, 0, 0,
-    -6,-6,-6,-6,-6,-6,-6,-6,
-    -1,-2,-3,-4,-5,-3,-2,-1   
+#define BOARD_SIZE 10
+
+typedef struct {
+    int x, y;
+} Vector2;
+
+short int board[BOARD_SIZE][BOARD_SIZE] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 1, 2, 3, 5, 4, 3, 2, 1, 0,
+    0, 6, 6, 6, 6, 6, 6, 6, 6, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0,-6,-6,-6,-6,-6,-6,-6,-6, 0,
+    0,-1,-2,-3,-4,-5,-3,-2,-1, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
+enum pieces {
+    WHITE_TOWER = 1,
+    BLACK_TOWER = -1,
+
+    WHITE_PRIEST = 2,
+    BLACK_PRIEST = -2,
+
+    WHITE_HORSE = 3,
+    BLACK_HORSE = -3,
+
+    WHITE_KING = 4,
+    BLACK_KING = -4,
+        
+    WHITE_QUEEN = 5,
+    BLACK_QUEEN = -5,
+
+    WHITE_PAWN = 6,
+    BLACK_PAWN = -6,
+
+    EMPTY = 0
+};
+
+bool is_destiny( Vector2* selected_pos, int x, int y ) {
+    if ( x == 0 || y == 0 || x == BOARD_SIZE-1 || y == BOARD_SIZE-1 )
+        return false;
+        
+    int piece = board[selected_pos->x][selected_pos->y];
+    switch( piece ) {
+
+        case WHITE_TOWER:
+        case BLACK_TOWER: return
+                y == selected_pos->y || x == selected_pos->x;
+                
+        case WHITE_PRIEST:
+        case BLACK_PRIEST: return
+                abs(x - selected_pos->x) == abs(y - selected_pos->y);
+
+        case WHITE_HORSE:
+        case BLACK_HORSE: return
+                (y == selected_pos->y - 1 || y == selected_pos->y + 1) && (x == selected_pos->x + 2 || x == selected_pos->x - 2) ||
+                (y == selected_pos->y - 2 || y == selected_pos->y + 2) && (x == selected_pos->x + 1 || x == selected_pos->x - 1);
+                
+        case WHITE_KING:
+        case BLACK_KING: return
+                abs(y - selected_pos->y) <= 1 && abs(x - selected_pos->x) <= 1;
+
+        case WHITE_QUEEN:
+        case BLACK_QUEEN: return
+                abs(x - selected_pos->x) == abs(y - selected_pos->y) ||
+                y == selected_pos->y || x == selected_pos->x;
+
+        case WHITE_PAWN: return
+                y == selected_pos->y &&
+                (x == selected_pos->x + 1 || (x == selected_pos->x + 2 && piece != EMPTY) );
+                
+        case BLACK_PAWN: return
+                y == selected_pos->y &&
+                (x == selected_pos->x - 1 || (x == selected_pos->x - 2 && piece != EMPTY) );
+                
+        case EMPTY: return false;
+    }
+}
+
 int main() {
-    const int UNIT = 32, BORDER = 20,
+    const int UNIT = 32, BORDER = UNIT,
         width = UNIT * 8 + BORDER * 2,
         height = UNIT * 8 + BORDER * 2;
         
@@ -27,29 +98,26 @@ int main() {
         
     bool running = true,
         clicked = false,
-        selected = false;
+        selected = false,
+        black_turn = true;
 
-    int window_mouse_pos_x,
-        window_mouse_pos_y,
-        window_pos_x,
-        window_pos_y,
-        mouse_pos_x,
-        mouse_pos_y,
-        selected_x,
-        selected_y;
+    short int piece;
+
+    Vector2 window_mouse_pos = { 0, 0 },
+        window_pos = { 0, 0 },
+        mouse_pos = { 0, 0 },
+        selected_pos = { 0, 0 };
 
     SDL_Init(SDL_INIT_EVERYTHING);
 
     window = SDL_CreateWindow("CHESS", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_ALLOW_HIGHDPI);
-    if (window == ((void *)0))
-    {
+    if (window == ((void *)0)) {
         printf("Error creating window: %s", SDL_GetError());
         return 1;
     }
 
     render = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (render == ((void *)0))
-    {
+    if (render == ((void *)0)) {
         printf("Error creating renderer: %s", SDL_GetError());
         return 1;
     }
@@ -102,56 +170,66 @@ int main() {
                 case SDL_MOUSEBUTTONDOWN: clicked = true; break;
             }
 
-        SDL_GetGlobalMouseState(&window_mouse_pos_x, &window_mouse_pos_y);
-        SDL_GetWindowPosition(window, &window_pos_x, &window_pos_y);
-        mouse_pos_x = window_mouse_pos_x - window_pos_x;
-        mouse_pos_y = window_mouse_pos_y - window_pos_y;
+        SDL_GetGlobalMouseState(&window_mouse_pos.x, &window_mouse_pos.y);
+        SDL_GetWindowPosition(window, &window_pos.x, &window_pos.y);
+        mouse_pos.x = window_mouse_pos.x - window_pos.x;
+        mouse_pos.y = window_mouse_pos.y - window_pos.y;
 
         SDL_RenderClear( render );
         
         r.w = UNIT;
         r.h = UNIT;
         bool is_black = true;
-        int piece;
         SDL_Texture** current_piece;
 
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
             is_black = !is_black;
-            for (int j = 0; j < 8; j++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
 
                 piece = board[j][i];
-                r.x = i * UNIT + BORDER;
-                r.y = j * UNIT + BORDER;
-                 
-                if ( is_black )  SDL_SetRenderDrawColor(render, 137, 80, 49, 255);
-                else                SDL_SetRenderDrawColor(render, 248, 222, 157, 255);
+                r.x = i * UNIT;
+                r.y = j * UNIT;
+
+                if ( j == 0 || i == 0 || j == BOARD_SIZE-1 || i == BOARD_SIZE-1 )
+                    if (black_turn) SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
+                    else            SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
+                else if ( is_black ) SDL_SetRenderDrawColor(render, 137, 80, 49, 255);
+                else                 SDL_SetRenderDrawColor(render, 248, 222, 157, 255);
                 
                 if ( selected ) {
-                    if ( j == selected_x && i == selected_y ) 
+                    if ( is_destiny( &selected_pos, j, i ) && (board[selected_pos.x][selected_pos.y] < 0) == black_turn )
+                        SDL_SetRenderDrawColor(render, 215, 155, 0, 255);
+
+                    if ( j == selected_pos.x && i == selected_pos.y )
                         SDL_SetRenderDrawColor(render, 215, 0, 0, 255);
-                        
-                    
                 }
 
-                if (mouse_pos_x > r.x &&
-                    mouse_pos_x < r.x + r.w &&
-                    mouse_pos_y > r.y &&
-                    mouse_pos_y < r.y + r.h) {
+                if (mouse_pos.x > r.x &&
+                    mouse_pos.x < r.x + r.w &&
+                    mouse_pos.y > r.y &&
+                    mouse_pos.y < r.y + r.h) {
                         SDL_SetRenderDrawColor(render, 60, 179, 113, 255);
                         
-                        if (clicked) {
-                            if (selected) {
+                        if (clicked)
+                            if (selected && is_destiny( &selected_pos, j, i ) && (board[selected_pos.x][selected_pos.y] < 0) == black_turn) {
+                                selected = false;
+                                black_turn = !black_turn;
 
-                                    selected = false;
-                                    board[j][i] = board[selected_x][selected_y];
-                                    board[selected_x][selected_y] = 0;
+                                if (board[j][i] != 0) {
+                                    if (board[j][i] > 0)
+                                        board[5][0] = board[j][i];
+                                    else
+                                        board[4][BOARD_SIZE-1] = board[j][i];
+                                }
+
+                                board[j][i] = board[selected_pos.x][selected_pos.y];
+                                board[selected_pos.x][selected_pos.y] = EMPTY;
                             }
-                            else if (piece != 0) {
+                            else {
                                 selected = true;
-                                selected_x = j;
-                                selected_y = i;
+                                selected_pos.x = j;
+                                selected_pos.y = i;
                             }
-                        }
                 }
 
                 SDL_RenderFillRect(render, &r);
