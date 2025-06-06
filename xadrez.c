@@ -15,7 +15,7 @@ short int board[BOARD_SIZE][BOARD_SIZE] = {
     0, 1, 2, 3, 5, 4, 3, 2, 1, 0,
     0, 6, 6, 6, 6, 6, 6, 6, 6, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,-1, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0,-6,-6,-6,-6,-6,-6,-6,-6, 0,
@@ -50,12 +50,27 @@ bool is_destiny( Vector2* selected_pos, int x, int y ) {
         return false;
         
     int piece = board[selected_pos->x][selected_pos->y];
-    switch( piece ) {
+    int distance_from_piece_x = x - selected_pos->x;
 
+    switch( piece ) {
         case WHITE_TOWER:
-        case BLACK_TOWER: return
-                y == selected_pos->y || x == selected_pos->x;
-                
+        case BLACK_TOWER:
+            bool is_selected = false;
+
+            if ( y == selected_pos->y ) {
+                for ( int i = selected_pos->x; i >= 0; i-- ) {
+                    if ( board[i][y] == EMPTY ) {
+                        is_selected = true;
+                        break;
+                    }
+
+                    if ( i == x ) break; 
+                }
+            
+            }
+
+            return is_selected;
+
         case WHITE_PRIEST:
         case BLACK_PRIEST: return
                 abs(x - selected_pos->x) == abs(y - selected_pos->y);
@@ -71,17 +86,21 @@ bool is_destiny( Vector2* selected_pos, int x, int y ) {
 
         case WHITE_QUEEN:
         case BLACK_QUEEN: return
-                abs(x - selected_pos->x) == abs(y - selected_pos->y) ||
+            abs(x - selected_pos->x) == abs(y - selected_pos->y) ||
                 y == selected_pos->y || x == selected_pos->x;
 
         case WHITE_PAWN: return
-                y == selected_pos->y &&
-                (x == selected_pos->x + 1 || (x == selected_pos->x + 2 && piece != EMPTY) );
+            (y == selected_pos->y && board[x][y] == EMPTY && distance_from_piece_x <= 2 && distance_from_piece_x > 0) ||
+            (y == selected_pos->y -1 || y == selected_pos->y +1)
+                && x == selected_pos->x + 1
+                && board[x][y] < 0;
                 
         case BLACK_PAWN: return
-                y == selected_pos->y &&
-                (x == selected_pos->x - 1 || (x == selected_pos->x - 2 && piece != EMPTY) );
-                
+            (y == selected_pos->y && board[x][y] == EMPTY && distance_from_piece_x >= -2 && distance_from_piece_x < 0) ||
+            (y == selected_pos->y -1 || y == selected_pos->y +1)
+                && x == selected_pos->x - 1
+                && board[x][y] > 0;
+
         case EMPTY: return false;
     }
 }
@@ -182,9 +201,9 @@ int main() {
         bool is_black = true;
         SDL_Texture** current_piece;
 
-        for (int i = 0; i < BOARD_SIZE; i++) {
+        for ( int i = 0; i < BOARD_SIZE; i++ ) {
             is_black = !is_black;
-            for (int j = 0; j < BOARD_SIZE; j++) {
+            for ( int j = 0; j < BOARD_SIZE; j++ ) {
 
                 piece = board[j][i];
                 r.x = i * UNIT;
@@ -214,13 +233,6 @@ int main() {
                             if (selected && is_destiny( &selected_pos, j, i ) && (board[selected_pos.x][selected_pos.y] < 0) == black_turn) {
                                 selected = false;
                                 black_turn = !black_turn;
-
-                                if (board[j][i] != 0) {
-                                    if (board[j][i] > 0)
-                                        board[5][0] = board[j][i];
-                                    else
-                                        board[4][BOARD_SIZE-1] = board[j][i];
-                                }
 
                                 board[j][i] = board[selected_pos.x][selected_pos.y];
                                 board[selected_pos.x][selected_pos.y] = EMPTY;
