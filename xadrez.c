@@ -15,8 +15,8 @@ short int board[BOARD_SIZE][BOARD_SIZE] = {
     0, 1, 2, 3, 5, 4, 3, 2, 1, 0,
     0, 6, 6, 6, 6, 6, 6, 6, 6, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,-1, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,-1, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0,-6,-6,-6,-6,-6,-6,-6,-6, 0,
     0,-1,-2,-3,-4,-5,-3,-2,-1, 0,
@@ -50,7 +50,7 @@ void start(SDL_Renderer*);
 void destroy();
 void draw(SDL_Renderer*);
 
-const int   UNIT = 32,
+const int   UNIT = 56,
             BORDER = UNIT;
 
 bool running = true,
@@ -102,8 +102,7 @@ int main() {
         mouse_pos.x = window_mouse_pos.x - window_pos.x;
         mouse_pos.y = window_mouse_pos.y - window_pos.y;
 
-        if (clicked)
-            draw(render);
+        draw(render);
     }
 
     destroy();
@@ -128,59 +127,59 @@ SDL_Texture *L_BLACK_QUEEN;
 SDL_Texture *L_WHITE_QUEEN;
 
 void start(SDL_Renderer* render) {
-    SDL_Surface *S_BLACK_PAWN     = SDL_LoadBMP("black_pawn.bmp");     
-    SDL_Surface *S_WHITE_PAWN     = SDL_LoadBMP("white_pawn.bmp");
-    SDL_Surface *S_BLACK_TOWER    = SDL_LoadBMP("black_tower.bmp");
-    SDL_Surface *S_WHITE_TOWER    = SDL_LoadBMP("white_tower.bmp");
-    SDL_Surface *S_BLACK_PRIEST   = SDL_LoadBMP("black_priest.bmp");
-    SDL_Surface *S_WHITE_PRIEST   = SDL_LoadBMP("white_priest.bmp");
-    SDL_Surface *S_BLACK_HORSE    = SDL_LoadBMP("black_horse.bmp");
-    SDL_Surface *S_WHITE_HORSE    = SDL_LoadBMP("white_horse.bmp");
-    SDL_Surface *S_BLACK_KING     = SDL_LoadBMP("black_king.bmp");
-    SDL_Surface *S_WHITE_KING     = SDL_LoadBMP("white_king.bmp");
-    SDL_Surface *S_BLACK_QUEEN    = SDL_LoadBMP("black_queen.bmp");
-    SDL_Surface *S_WHITE_QUEEN    = SDL_LoadBMP("white_queen.bmp");
+    SDL_Surface *S_BLACK_PAWN     = SDL_LoadBMP( "black_pawn.bmp" );     
+    SDL_Surface *S_WHITE_PAWN     = SDL_LoadBMP( "white_pawn.bmp" );
+    SDL_Surface *S_BLACK_TOWER    = SDL_LoadBMP( "black_tower.bmp" );
+    SDL_Surface *S_WHITE_TOWER    = SDL_LoadBMP( "white_tower.bmp" );
+    SDL_Surface *S_BLACK_PRIEST   = SDL_LoadBMP( "black_priest.bmp" );
+    SDL_Surface *S_WHITE_PRIEST   = SDL_LoadBMP( "white_priest.bmp" );
+    SDL_Surface *S_BLACK_HORSE    = SDL_LoadBMP( "black_horse.bmp" );
+    SDL_Surface *S_WHITE_HORSE    = SDL_LoadBMP( "white_horse.bmp" );
+    SDL_Surface *S_BLACK_KING     = SDL_LoadBMP( "black_king.bmp" );
+    SDL_Surface *S_WHITE_KING     = SDL_LoadBMP( "white_king.bmp" );
+    SDL_Surface *S_BLACK_QUEEN    = SDL_LoadBMP( "black_queen.bmp" );
+    SDL_Surface *S_WHITE_QUEEN    = SDL_LoadBMP( "white_queen.bmp" );
 
-    L_BLACK_PAWN     = SDL_CreateTextureFromSurface(render, S_BLACK_PAWN);     
-    L_WHITE_PAWN     = SDL_CreateTextureFromSurface(render, S_WHITE_PAWN);
-    L_BLACK_TOWER    = SDL_CreateTextureFromSurface(render, S_BLACK_TOWER);
-    L_WHITE_TOWER    = SDL_CreateTextureFromSurface(render, S_WHITE_TOWER);
-    L_BLACK_PRIEST   = SDL_CreateTextureFromSurface(render, S_BLACK_PRIEST);
-    L_WHITE_PRIEST   = SDL_CreateTextureFromSurface(render, S_WHITE_PRIEST);
-    L_BLACK_HORSE    = SDL_CreateTextureFromSurface(render, S_BLACK_HORSE);
-    L_WHITE_HORSE    = SDL_CreateTextureFromSurface(render, S_WHITE_HORSE);
-    L_BLACK_KING     = SDL_CreateTextureFromSurface(render, S_BLACK_KING);
-    L_WHITE_KING     = SDL_CreateTextureFromSurface(render, S_WHITE_KING);
-    L_BLACK_QUEEN    = SDL_CreateTextureFromSurface(render, S_BLACK_QUEEN);
-    L_WHITE_QUEEN    = SDL_CreateTextureFromSurface(render, S_WHITE_QUEEN);
+    L_BLACK_PAWN     = SDL_CreateTextureFromSurface( render, S_BLACK_PAWN );     
+    L_WHITE_PAWN     = SDL_CreateTextureFromSurface( render, S_WHITE_PAWN );
+    L_BLACK_TOWER    = SDL_CreateTextureFromSurface( render, S_BLACK_TOWER );
+    L_WHITE_TOWER    = SDL_CreateTextureFromSurface( render, S_WHITE_TOWER );
+    L_BLACK_PRIEST   = SDL_CreateTextureFromSurface( render, S_BLACK_PRIEST );
+    L_WHITE_PRIEST   = SDL_CreateTextureFromSurface( render, S_WHITE_PRIEST );
+    L_BLACK_HORSE    = SDL_CreateTextureFromSurface( render, S_BLACK_HORSE );
+    L_WHITE_HORSE    = SDL_CreateTextureFromSurface( render, S_WHITE_HORSE );
+    L_BLACK_KING     = SDL_CreateTextureFromSurface( render, S_BLACK_KING );
+    L_WHITE_KING     = SDL_CreateTextureFromSurface( render, S_WHITE_KING );
+    L_BLACK_QUEEN    = SDL_CreateTextureFromSurface( render, S_BLACK_QUEEN );
+    L_WHITE_QUEEN    = SDL_CreateTextureFromSurface( render, S_WHITE_QUEEN );
         
-    SDL_FreeSurface(S_BLACK_PAWN);
-    SDL_FreeSurface(S_WHITE_PAWN);
-    SDL_FreeSurface(S_BLACK_TOWER);
-    SDL_FreeSurface(S_WHITE_TOWER);
-    SDL_FreeSurface(S_BLACK_PRIEST);
-    SDL_FreeSurface(S_WHITE_PRIEST);
-    SDL_FreeSurface(S_BLACK_HORSE);
-    SDL_FreeSurface(S_WHITE_HORSE);
-    SDL_FreeSurface(S_BLACK_KING);
-    SDL_FreeSurface(S_WHITE_KING);
-    SDL_FreeSurface(S_BLACK_QUEEN);
-    SDL_FreeSurface(S_WHITE_QUEEN);
+    SDL_FreeSurface( S_BLACK_PAWN );
+    SDL_FreeSurface( S_WHITE_PAWN );
+    SDL_FreeSurface( S_BLACK_TOWER );
+    SDL_FreeSurface( S_WHITE_TOWER );
+    SDL_FreeSurface( S_BLACK_PRIEST );
+    SDL_FreeSurface( S_WHITE_PRIEST );
+    SDL_FreeSurface( S_BLACK_HORSE );
+    SDL_FreeSurface( S_WHITE_HORSE );
+    SDL_FreeSurface( S_BLACK_KING );
+    SDL_FreeSurface( S_WHITE_KING );
+    SDL_FreeSurface( S_BLACK_QUEEN );
+    SDL_FreeSurface( S_WHITE_QUEEN );
 }
 
 void destroy() {
-    SDL_DestroyTexture(L_BLACK_PAWN);
-    SDL_DestroyTexture(L_WHITE_PAWN);
-    SDL_DestroyTexture(L_BLACK_TOWER);
-    SDL_DestroyTexture(L_WHITE_TOWER);
-    SDL_DestroyTexture(L_BLACK_PRIEST);
-    SDL_DestroyTexture(L_WHITE_PRIEST);
-    SDL_DestroyTexture(L_BLACK_HORSE);
-    SDL_DestroyTexture(L_WHITE_HORSE);
-    SDL_DestroyTexture(L_BLACK_KING);
-    SDL_DestroyTexture(L_WHITE_KING);
-    SDL_DestroyTexture(L_BLACK_QUEEN);
-    SDL_DestroyTexture(L_WHITE_QUEEN);
+    SDL_DestroyTexture( L_BLACK_PAWN );
+    SDL_DestroyTexture( L_WHITE_PAWN );
+    SDL_DestroyTexture( L_BLACK_TOWER );
+    SDL_DestroyTexture( L_WHITE_TOWER );
+    SDL_DestroyTexture( L_BLACK_PRIEST );
+    SDL_DestroyTexture( L_WHITE_PRIEST );
+    SDL_DestroyTexture( L_BLACK_HORSE );
+    SDL_DestroyTexture( L_WHITE_HORSE );
+    SDL_DestroyTexture( L_BLACK_KING );
+    SDL_DestroyTexture( L_WHITE_KING );
+    SDL_DestroyTexture( L_BLACK_QUEEN );
+    SDL_DestroyTexture( L_WHITE_QUEEN );
 }
 
 short int piece;
@@ -203,10 +202,10 @@ void draw(SDL_Renderer* render) {
             r.y = j * UNIT;
 
             if ( j == 0 || i == 0 || j == BOARD_SIZE-1 || i == BOARD_SIZE-1 )
-                if (black_turn) SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
-                else            SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
-            else if ( is_black ) SDL_SetRenderDrawColor(render, 137, 80, 49, 255);
-            else                 SDL_SetRenderDrawColor(render, 248, 222, 157, 255);
+                if (black_turn) SDL_SetRenderDrawColor( render, 0, 0, 0, 255 );
+                else            SDL_SetRenderDrawColor( render, 255, 255, 255, 255 );
+            else if ( is_black ) SDL_SetRenderDrawColor( render, 137, 80, 49, 255 );
+            else                 SDL_SetRenderDrawColor( render, 248, 222, 157, 255 );
             
             if ( selected ) {
                 if ( is_destiny( &selected_pos, j, i ) && (board[selected_pos.x][selected_pos.y] < 0) == black_turn )
@@ -224,6 +223,8 @@ void draw(SDL_Renderer* render) {
                     
                     if (clicked)
                         if (selected && is_destiny( &selected_pos, j, i ) && (board[selected_pos.x][selected_pos.y] < 0) == black_turn) {
+                            SDL_SetRenderDrawColor(render, 215, 155, 0, 255);
+                            
                             selected = false;
                             black_turn = !black_turn;
 
@@ -257,12 +258,12 @@ void draw(SDL_Renderer* render) {
             }
 
             if ( current_piece != NULL )
-                SDL_RenderCopy(render, *current_piece, NULL, &r);
+                SDL_RenderCopy( render, *current_piece, NULL, &r );
         }
     }
 
-    SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
-    SDL_RenderPresent(render);
+    SDL_SetRenderDrawColor( render, 0, 0, 0, 255 );
+    SDL_RenderPresent( render );
 }
 
 bool is_destiny( Vector2* selected_pos, int x, int y ) {
@@ -275,20 +276,36 @@ bool is_destiny( Vector2* selected_pos, int x, int y ) {
     switch( piece ) {
         case WHITE_TOWER:
         case BLACK_TOWER:
-
-            bool is_selected = true;
-            if ( y == selected_pos->y ) {
-                for ( int i = selected_pos->x; i >= 0; i-- ) {
-                    printf("%d %d %d", i, y, board[i][y]);
-                    if ( board[i][y] != EMPTY ) {
-                        is_selected = false;
-                        break;
+            bool next = false;
+            if ( x == selected_pos->x ) {
+                if ( selected_pos->y < y ) {
+                    for ( int i = selected_pos->y; i > y; i-- ) {
+                        if ( board[x][i] > EMPTY ) next = true;
                     }
-
-                    if ( i == x ) break;
+                    return next;
+                }
+                else if ( selected_pos->y > y ) {
+                    for ( int i = selected_pos->y; i < y; i++ ) {
+                        if ( board[x][i] > EMPTY ) next = true;
+                    }
+                    return next;
                 }
             }
-            return is_selected;
+            else if ( y == selected_pos->y ) {
+                if ( selected_pos->x < x ) {
+                    for ( int i = selected_pos->x; i > x; i-- ) {
+                        if ( board[i][y] > EMPTY ) next = true;
+                    }
+                    return next;
+                }
+                else if ( selected_pos->x > x ) {
+                    for ( int i = selected_pos->x; i < x; i++ ) {
+                        if ( board[i][y] > EMPTY ) next = true;
+                    }
+                    return next;
+                }
+            }
+            return false;
 
         case WHITE_PRIEST:
         case BLACK_PRIEST: return
@@ -299,14 +316,25 @@ bool is_destiny( Vector2* selected_pos, int x, int y ) {
                 (y == selected_pos->y - 1 || y == selected_pos->y + 1) && (x == selected_pos->x + 2 || x == selected_pos->x - 2) ||
                 (y == selected_pos->y - 2 || y == selected_pos->y + 2) && (x == selected_pos->x + 1 || x == selected_pos->x - 1);
                 
-        case WHITE_KING:
-        case BLACK_KING: return
-                abs(y - selected_pos->y) <= 1 && abs(x - selected_pos->x) <= 1;
+        case WHITE_KING: return
+                abs(y - selected_pos->y) <= 1 &&
+                abs(x - selected_pos->x) <= 1 &&
+                board[x][y] < 0;
 
-        case WHITE_QUEEN:
+        case BLACK_KING: return
+                abs(y - selected_pos->y) <= 1 &&
+                abs(x - selected_pos->x) <= 1 &&
+                board[x][y] > 0;
+
+        case WHITE_QUEEN: return
+                abs(x - selected_pos->x) == abs(y - selected_pos->y) ||
+                y == selected_pos->y || x == selected_pos->x &&
+                board[x][y] < 0;
+
         case BLACK_QUEEN: return
-            abs(x - selected_pos->x) == abs(y - selected_pos->y) ||
-                y == selected_pos->y || x == selected_pos->x;
+                abs(x - selected_pos->x) == abs(y - selected_pos->y) ||
+                y == selected_pos->y || x == selected_pos->x &&
+                board[x][y] > 0;
 
         case WHITE_PAWN: return
             (y == selected_pos->y && board[x][y] == EMPTY && distance_from_piece_x <= 2 && distance_from_piece_x > 0) ||
