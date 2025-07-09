@@ -4,23 +4,21 @@
 
 #include <SDL.h>
 
-#define BOARD_SIZE 10
+#define BOARD_SIZE 8
 
 typedef struct {
     int x, y;
 } Vector2;
 
 short int board[BOARD_SIZE][BOARD_SIZE] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 1, 2, 3, 5, 4, 3, 2, 1, 0,
-    0, 6, 6, 6, 6, 6, 6, 6, 6, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,-1, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0,-6,-6,-6,-6,-6,-6,-6,-6, 0,
-    0,-1,-2,-3,-4,-5,-3,-2,-1, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+     1, 2, 3, 5, 4, 3, 2, 1,
+     6, 6, 6, 6, 6, 6, 6, 6,
+     0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, 0, 0,
+    -6,-6,-6,-6,-6,-6,-6,-6,
+    -1,-2,-3,-4,-5,-3,-2,-1,
 };
 
 enum pieces {
@@ -45,27 +43,37 @@ enum pieces {
     EMPTY = 0
 };
 
-bool is_destiny( Vector2*, int, int);
-void start(SDL_Renderer*);
-void destroy();
-void draw(SDL_Renderer*);
-
-const int   UNIT = 24,
-            BORDER = UNIT;
+const int UNIT = 32;
 
 bool running = true,
-    clicked = false,
-    selected = false,
-    black_turn = true;
+     clicked = false,
+     selected = false,
+     black_turn = true;
 
 Vector2 window_mouse_pos = { 0, 0 },
     window_pos = { 0, 0 },
     mouse_pos = { 0, 0 },
     selected_pos = { 0, 0 };
 
+void start(SDL_Renderer*);
+void draw(SDL_Renderer*);
+void update();
+void destroy();
+
+typedef bool (*calc_pos_fn)(int, int);
+calc_pos_fn fn_piece(short int);
+
+bool move_pawn(int, int);
+bool move_tower(int, int);
+bool move_priest(int, int);
+bool move_horse(int, int);
+bool move_king(int, int);
+bool move_queen(int, int);
+bool move_empty(int, int);
+
 int main() {
-    int width = UNIT * 8 + BORDER * 2,
-        height = UNIT * 8 + BORDER * 2;
+    int width = UNIT * BOARD_SIZE,
+        height = UNIT * BOARD_SIZE;
         
     SDL_Window *window;
     SDL_Renderer *render;
@@ -85,7 +93,6 @@ int main() {
         return 1;
     }
 
-    SDL_SetWindowPosition(window, 100000, 0);
     start(render);
 
     draw(render);
@@ -103,6 +110,9 @@ int main() {
         mouse_pos.x = window_mouse_pos.x - window_pos.x;
         mouse_pos.y = window_mouse_pos.y - window_pos.y;
 
+        if (clicked) {
+            update();
+        }
         draw(render);
     }
 
@@ -183,10 +193,48 @@ void destroy() {
     SDL_DestroyTexture( L_WHITE_QUEEN );
 }
 
-short int piece;
-bool is_black = true;
 SDL_Texture** current_piece;
+bool is_black = true;
 SDL_Rect r;
+
+calc_pos_fn current_fn;
+
+void update() {
+    for ( int i = 0; i < BOARD_SIZE; i++ ) {
+        for ( int j = 0; j < BOARD_SIZE; j++ ) {
+            if (mouse_pos.x > i * UNIT &&
+                mouse_pos.x < (i + 1) * UNIT &&
+                mouse_pos.y > j * UNIT &&
+                mouse_pos.y < (j + 1) * UNIT) {
+                if (selected)            
+                    selected = false;
+                else {
+                    selected = true;
+                    selected_pos.x = j;
+                    selected_pos.y = i;
+                    current_fn = fn_piece(board[j][i]);
+                }
+            }
+
+            if (selected) {
+                if ( current_fn(i, j) ) {
+                    if (board[i][j] > 0)
+                        board[i][j] += 7;
+
+                    if (board[i][j] < 0)
+                        board[i][j] += -7;
+                }
+                else {
+                    if (board[i][j] > 0)
+                        board[i][j] -= 7;
+
+                    if (board[i][j] < 0)
+                        board[i][j] -= -7;
+                }
+            }
+        }
+    }
+}
 
 void draw(SDL_Renderer* render) {
     SDL_RenderClear( render );
@@ -195,53 +243,36 @@ void draw(SDL_Renderer* render) {
     r.h = UNIT;
 
     for ( int i = 0; i < BOARD_SIZE; i++ ) {
-        is_black = !is_black;
         for ( int j = 0; j < BOARD_SIZE; j++ ) {
-
-            piece = board[j][i];
+            short int piece = board[j][i];
             r.x = i * UNIT;
             r.y = j * UNIT;
 
-            if ( j == 0 || i == 0 || j == BOARD_SIZE-1 || i == BOARD_SIZE-1 )
-                if (black_turn) SDL_SetRenderDrawColor( render, 0, 0, 0, 255 );
-                else            SDL_SetRenderDrawColor( render, 255, 255, 255, 255 );
-            else if ( is_black ) SDL_SetRenderDrawColor( render, 137, 80, 49, 255 );
-            else                 SDL_SetRenderDrawColor( render, 248, 222, 157, 255 );
+            if ( is_black ) SDL_SetRenderDrawColor( render, 137, 80, 49, 255 );
+            else            SDL_SetRenderDrawColor( render, 248, 222, 157, 255 );
             
-            if ( selected ) {
-                if ( is_destiny( &selected_pos, j, i ) && (board[selected_pos.x][selected_pos.y] < 0) == black_turn )
-                    SDL_SetRenderDrawColor(render, 215, 155, 0, 255);
-
-                if ( j == selected_pos.x && i == selected_pos.y )
-                    SDL_SetRenderDrawColor(render, 215, 0, 0, 255);
+            if (piece > 6) {
+                piece -= 7;
+                SDL_SetRenderDrawColor(render, 215, 155, 0, 255);
             }
+            
+            if (piece < -6) {
+                piece -= -7;
+                SDL_SetRenderDrawColor(render, 215, 155, 0, 255);
+            }
+
+            if ( selected && j == selected_pos.x && i == selected_pos.y )
+                SDL_SetRenderDrawColor(render, 215, 0, 0, 255);
 
             if (mouse_pos.x > r.x &&
                 mouse_pos.x < r.x + r.w &&
                 mouse_pos.y > r.y &&
-                mouse_pos.y < r.y + r.h) {
+                mouse_pos.y < r.y + r.h)
                     SDL_SetRenderDrawColor(render, 60, 179, 113, 255);
-
-                    if (clicked)
-                        if (selected && is_destiny( &selected_pos, j, i ) && (board[selected_pos.x][selected_pos.y] < 0) == black_turn) {
-                            SDL_SetRenderDrawColor(render, 215, 155, 0, 255);
-                            
-                            selected = false;
-                            black_turn = !black_turn;
-
-                            board[j][i] = board[selected_pos.x][selected_pos.y];
-                            board[selected_pos.x][selected_pos.y] = EMPTY;
-                        }
-                        else {
-                            selected = true;
-                            selected_pos.x = j;
-                            selected_pos.y = i;
-                        }
-            }
-
-            SDL_RenderFillRect(render, &r);
-            is_black = !is_black;
             
+            SDL_RenderFillRect( render, &r );
+            is_black = !is_black;
+
             switch (piece) {
                 case -1: current_piece = &L_BLACK_TOWER;   break;  
                 case  1: current_piece = &L_WHITE_TOWER;   break;
@@ -261,132 +292,63 @@ void draw(SDL_Renderer* render) {
             if ( current_piece != NULL )
                 SDL_RenderCopy( render, *current_piece, NULL, &r );
         }
+        is_black = !is_black;
     }
 
     SDL_SetRenderDrawColor( render, 0, 0, 0, 255 );
     SDL_RenderPresent( render );
 }
 
-/*
-int pawn_move(Vector2* selected_pos, int ord) {
-
-}
-
-bool is_destiny(Vector2* selected_pos, int x, int y) {
-    if ( x == 0 || y == 0 || x == BOARD_SIZE-1 || y == BOARD_SIZE-1 )
-        return false;
-        
-    int piece = board[selected_pos->x][selected_pos->y];
-    int (*move_function)(int, int);
-
-    switch( piece ) {
+calc_pos_fn fn_piece(short int piece) {
+    switch (piece) {
+        case WHITE_PAWN:
+        case BLACK_PAWN: 
+            return move_pawn;
+        case WHITE_TOWER:
+        case BLACK_TOWER: 
+            return move_tower;
         case WHITE_PRIEST:
         case BLACK_PRIEST: 
-            move_function = pawn_move(selected_pos, x, y);
+            return move_priest;
+        case WHITE_HORSE:
+        case BLACK_HORSE: 
+            return move_horse;
+        case WHITE_KING:
+        case BLACK_KING: 
+            return move_king;
+        case WHITE_QUEEN:
+        case BLACK_QUEEN: 
+            return move_queen;
+        default:
+            return move_empty;
     }
+}
 
+bool move_pawn(int x, int y) {
     return false;
 }
 
-/*
-int f() {
-    return 1;
+bool move_tower(int x, int y) {
+    return false;
 }
 
-bool is_destiny( Vector2* selected_pos, int x, int y ) {
-    if ( x == 0 || y == 0 || x == BOARD_SIZE-1 || y == BOARD_SIZE-1 )
-        return false;
-        
-    int piece = board[selected_pos->x][selected_pos->y];
-    int distance_from_piece_x = x - selected_pos->x;
-
-    switch( piece ) {
-        case WHITE_TOWER:
-        case BLACK_TOWER:
-            if (x == selected_pos->x) {
-                return true;
-            }
-            return false;
-        /*
-            bool next = false;
-            if ( x == selected_pos->x ) {
-                if ( selected_pos->y < y ) {
-                    for ( int i = selected_pos->y; i > y; i-- ) {
-                        if ( board[x][i] > EMPTY ) next = true;
-                    }
-                    return next;
-                }
-                else if ( selected_pos->y > y ) {
-                    for ( int i = selected_pos->y; i < y; i++ ) {
-                        if ( board[x][i] > EMPTY ) next = true;
-                    }
-                    return next;
-                }
-            }
-            else if ( y == selected_pos->y ) {
-                if ( selected_pos->x < x ) {
-                    for ( int i = selected_pos->x; i > x; i-- ) {
-                        if ( board[i][y] > EMPTY ) next = true;
-                    }
-                    return next;
-                }
-                else if ( selected_pos->x > x ) {
-                    for ( int i = selected_pos->x; i < x; i++ ) {
-                        if ( board[i][y] > EMPTY ) next = true;
-                    }
-                    return next;
-                }
-            }
-            return next;
-
-
-        case WHITE_PRIEST:
-        case BLACK_PRIEST: 
-                int (*fn)();
-
-
-                fn = &f;
-                // abs(x - selected_pos->x) == abs(y - selected_pos->y);
-                return 0;
-
-        case WHITE_HORSE:
-        case BLACK_HORSE: return
-                (y == selected_pos->y - 1 || y == selected_pos->y + 1) && (x == selected_pos->x + 2 || x == selected_pos->x - 2) ||
-                (y == selected_pos->y - 2 || y == selected_pos->y + 2) && (x == selected_pos->x + 1 || x == selected_pos->x - 1);
-                
-        case WHITE_KING: return
-                abs(y - selected_pos->y) <= 1 &&
-                abs(x - selected_pos->x) <= 1 &&
-                board[x][y] < 0;
-
-        case BLACK_KING: return
-                abs(y - selected_pos->y) <= 1 &&
-                abs(x - selected_pos->x) <= 1 &&
-                board[x][y] > 0;
-
-        case WHITE_QUEEN: return
-                abs(x - selected_pos->x) == abs(y - selected_pos->y) ||
-                y == selected_pos->y || x == selected_pos->x &&
-                board[x][y] < 0;
-
-        case BLACK_QUEEN: return
-                abs(x - selected_pos->x) == abs(y - selected_pos->y) ||
-                y == selected_pos->y || x == selected_pos->x &&
-                board[x][y] > 0;
-
-        case WHITE_PAWN: return
-            (y == selected_pos->y && board[x][y] == EMPTY && distance_from_piece_x <= 2 && distance_from_piece_x > 0) ||
-            (y == selected_pos->y -1 || y == selected_pos->y +1)
-                && x == selected_pos->x + 1
-                && board[x][y] < 0;
-                
-        case BLACK_PAWN: return
-            (y == selected_pos->y && board[x][y] == EMPTY && distance_from_piece_x >= -2 && distance_from_piece_x < 0) ||
-            (y == selected_pos->y -1 || y == selected_pos->y +1)
-                && x == selected_pos->x - 1
-                && board[x][y] > 0;
-
-        case EMPTY: return false;
-    }
+bool move_priest(int x, int y) {
+    printf("(%d %d) - (%d %d) = (%d %d)\n", selected_pos.x, selected_pos.y, x, y, x - selected_pos.x, y - selected_pos.y);
+    return (selected_pos.x - x == selected_pos.y - y);
 }
-*/
+
+bool move_horse(int x, int y) {
+    return false;
+}
+
+bool move_king(int x, int y) {
+    return false;
+}
+
+bool move_queen(int x, int y) {
+    return false;
+}
+
+bool move_empty(int x, int y) {
+    return false;
+}
