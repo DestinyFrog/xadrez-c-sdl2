@@ -36,7 +36,7 @@ typedef struct {
 piece board[BOARD_SIZE][BOARD_SIZE];
 SDL_Texture** current_piece;
 
-const int UNIT = 48;
+const int UNIT = 32;
 
 bool running = true;
 bool black_turn = true;
@@ -64,7 +64,7 @@ void on_click( int, int );
 void on_mouse_move( int, int );
 void destroy();
 void int_to_sprite( int );
-void clear_board();
+void clear_targets();
 
 typedef void ( *calc_pos_fn ) ( int, int );
 calc_pos_fn fn_piece( short int );
@@ -248,7 +248,7 @@ void on_mouse_move( int mouse_pos_x, int mouse_pos_y ) {
     }
 }
 
-void clear_board() {
+void clear_targets() {
     for ( int i = 0; i < BOARD_SIZE; i++ ) {
         for ( int j = 0; j < BOARD_SIZE; j++ ) {
             board[i][j].target = false;
@@ -268,12 +268,11 @@ void on_click( int mouse_pos_x, int mouse_pos_y ) {
                     board[i][j].value = board[selected_x][selected_y].value;
                     board[selected_x][selected_y].value = EMPTY;
                     black_turn = !black_turn;
-                    clear_board();
+                    clear_targets();
                     return;
                 }
 
-
-                clear_board();
+                clear_targets();
                 calc_pos_fn fn = fn_piece( board[i][j].value );
                 if ( fn ) fn( i, j );
                 selected_x = i;
@@ -318,6 +317,9 @@ void int_to_sprite( int piece ) {
 }
 
 calc_pos_fn fn_piece(short int piece) {
+    if (piece < 0 && black_turn) return NULL;
+    if (piece > 0 && !black_turn) return NULL;
+
     switch (piece) {
         case WHITE_PAWN:
         case BLACK_PAWN: 
@@ -349,6 +351,12 @@ void move_pawn  ( int fx, int fy ) {
 
         if ( board[fx][fy - 1].value == EMPTY )
             board[fx][fy - 2].target = true;
+
+        if ( board[fx + 1][fy - 1].value != EMPTY )
+            board[fx + 1][fy - 1].target = true;
+
+        if ( board[fx - 1][fy - 1].value != EMPTY )
+            board[fx - 1][fy - 1].target = true;
     }
 
     else if ( board[fx][fy].value > EMPTY ) {
@@ -357,13 +365,13 @@ void move_pawn  ( int fx, int fy ) {
 
         if ( board[fx][fy + 1].value == EMPTY )
             board[fx][fy + 2].target = true;
+
+        if ( board[fx + 1][fy + 1].value != EMPTY )
+            board[fx + 1][fy + 1].target = true;
+
+        if ( board[fx - 1][fy + 1].value != EMPTY )
+            board[fx - 1][fy + 1].target = true;
     }
-
-    if ( board[fx + 1][fy - 1].value != EMPTY )
-        board[fx + 1][fy - 1].target = true;
-
-    if ( board[fx - 1][fy - 1].value != EMPTY )
-        board[fx - 1][fy - 1].target = true;
 }
 
 void move_tower ( int fx, int fy ) {
@@ -399,7 +407,8 @@ void move_priest( int fx, int fy ) {
     tx--; ty--;
     while( tx >= 0 && ty >= 0 ) {
         board[tx][ty].target = true;
-        if ( board[tx][ty].value != EMPTY ) break;
+        if ( board[tx][ty].value != EMPTY )
+            break;
         tx--; ty--;
     }
 
@@ -407,7 +416,8 @@ void move_priest( int fx, int fy ) {
     tx++; ty--;
     while( tx < BOARD_SIZE && ty >= 0 ) {
         board[tx][ty].target = true;
-        if ( board[tx][ty].value != EMPTY ) break;
+        if ( board[tx][ty].value != EMPTY )
+            break;
         tx++; ty--;
     }
 
@@ -415,7 +425,8 @@ void move_priest( int fx, int fy ) {
     tx++; ty++;
     while( tx < BOARD_SIZE && ty < BOARD_SIZE ) {
         board[tx][ty].target = true;
-        if ( board[tx][ty].value != EMPTY ) break;
+        if ( board[tx][ty].value != EMPTY )
+            break;
         tx++; ty++;
     }
 
@@ -423,7 +434,8 @@ void move_priest( int fx, int fy ) {
     tx--; ty++;
     while( tx >= 0 && ty < BOARD_SIZE ) {
         board[tx][ty].target = true;
-        if ( board[tx][ty].value != EMPTY ) break;
+        if ( board[tx][ty].value != EMPTY )
+            break;
         tx--; ty++;
     }
 }
