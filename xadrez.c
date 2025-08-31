@@ -344,99 +344,79 @@ calc_pos_fn fn_piece(short int piece) {
     }
 }
 
-void move_pawn  ( int fx, int fy ) {
-    if ( board[fx][fy].value < EMPTY ) {
-        if ( board[fx][fy - 1].value == EMPTY )
-            board[fx][fy - 1].target = true;
-
-        if ( board[fx][fy - 1].value == EMPTY )
-            board[fx][fy - 2].target = true;
-
-        if ( board[fx + 1][fy - 1].value != EMPTY )
-            board[fx + 1][fy - 1].target = true;
-
-        if ( board[fx - 1][fy - 1].value != EMPTY )
-            board[fx - 1][fy - 1].target = true;
+void move_pawn(int fx, int fy) {
+    int direction = (board[fx][fy].value < EMPTY) ? -1 : 1;
+    bool is_first_move = (direction == -1) ? (fy == BOARD_SIZE - 2) : (fy == 1);
+    
+    int front_y = fy + direction;
+    if (front_y >= 0 && front_y < BOARD_SIZE && board[fx][front_y].value == EMPTY) {
+        board[fx][front_y].target = true;
+        
+        if (is_first_move) {
+            int double_front_y = fy + 2 * direction;
+            if (double_front_y >= 0 && double_front_y < BOARD_SIZE && 
+                board[fx][double_front_y].value == EMPTY) {
+                board[fx][double_front_y].target = true;
+            }
+        }
     }
 
-    else if ( board[fx][fy].value > EMPTY ) {
-        if ( board[fx][fy + 1].value == EMPTY )
-            board[fx][fy + 1].target = true;
-
-        if ( board[fx][fy + 1].value == EMPTY )
-            board[fx][fy + 2].target = true;
-
-        if ( board[fx + 1][fy + 1].value != EMPTY )
-            board[fx + 1][fy + 1].target = true;
-
-        if ( board[fx - 1][fy + 1].value != EMPTY )
-            board[fx - 1][fy + 1].target = true;
-    }
-}
-
-void move_tower ( int fx, int fy ) {
-    for ( int x = fx + 1; x < BOARD_SIZE; x++ ) {
-        board[x][fy].target = true;
-        if ( board[x][fy].value != EMPTY )
-            break;
-    }
-
-    for ( int x = fx - 1; x >= 0; x-- ) {
-        board[x][fy].target = true;
-        if ( board[x][fy].value != EMPTY )
-            break;
-    }
-
-    for ( int y = fy + 1; y < BOARD_SIZE; y++ ) {
-        board[fx][y].target = true;
-        if ( board[fx][y].value != EMPTY )
-            break;
-    }
-
-    for ( int y = fy - 1; y >= 0; y-- ) {
-        board[fx][y].target = true;
-        if ( board[fx][y].value != EMPTY )
-            break;
+    int diagonal_x[] = {fx - 1, fx + 1};
+    for (int i = 0; i < 2; i++) {
+        int dx = diagonal_x[i];
+        int dy = fy + direction;
+        
+        if (dx >= 0 && dx < BOARD_SIZE && dy >= 0 && dy < BOARD_SIZE) {
+            if (board[dx][dy].value != EMPTY) {
+                bool can_capture = (board[fx][fy].value < EMPTY && board[dx][dy].value > EMPTY) ||
+                                  (board[fx][fy].value > EMPTY && board[dx][dy].value < EMPTY);
+                if (can_capture) {
+                    board[dx][dy].target = true;
+                }
+            }
+        }
     }
 }
 
-void move_priest( int fx, int fy ) {
-    int tx, ty;
+void move_tower(int fx, int fy) {
+    int directions[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+    
+    for (int i = 0; i < 4; i++) {
+        int dx = directions[i][0];
+        int dy = directions[i][1];
+        int tx = fx + dx;
+        int ty = fy + dy;
+        
+        while (tx >= 0 && tx < BOARD_SIZE && ty >= 0 && ty < BOARD_SIZE) {
+            bool same_sign = (board[fx][fy].value > 0 && board[tx][ty].value > 0) ||
+                                (board[fx][fy].value < 0 && board[tx][ty].value < 0);
 
-    tx = fx, ty = fy;
-    tx--; ty--;
-    while( tx >= 0 && ty >= 0 ) {
-        board[tx][ty].target = true;
-        if ( board[tx][ty].value != EMPTY )
-            break;
-        tx--; ty--;
+            if (!same_sign) board[tx][ty].target = true;
+            if (board[tx][ty].value != EMPTY) break;
+
+            tx += dx;
+            ty += dy;
+        }
     }
+}
 
-    tx = fx, ty = fy;
-    tx++; ty--;
-    while( tx < BOARD_SIZE && ty >= 0 ) {
-        board[tx][ty].target = true;
-        if ( board[tx][ty].value != EMPTY )
-            break;
-        tx++; ty--;
-    }
+void move_priest(int fx, int fy) {
+    int dx[] = {-1, 1, 1, -1};
+    int dy[] = {-1, -1, 1, 1};
+    
+    for (int i = 0; i < 4; i++) {
+        int tx = fx + dx[i];
+        int ty = fy + dy[i];
+        
+        while (tx >= 0 && tx < BOARD_SIZE && ty >= 0 && ty < BOARD_SIZE) {
+            bool same_sign = (board[fx][fy].value > 0 && board[tx][ty].value > 0) ||
+                                (board[fx][fy].value < 0 && board[tx][ty].value < 0);
 
-    tx = fx, ty = fy;
-    tx++; ty++;
-    while( tx < BOARD_SIZE && ty < BOARD_SIZE ) {
-        board[tx][ty].target = true;
-        if ( board[tx][ty].value != EMPTY )
-            break;
-        tx++; ty++;
-    }
-
-    tx = fx, ty = fy;
-    tx--; ty++;
-    while( tx >= 0 && ty < BOARD_SIZE ) {
-        board[tx][ty].target = true;
-        if ( board[tx][ty].value != EMPTY )
-            break;
-        tx--; ty++;
+            if (!same_sign) board[tx][ty].target = true;
+            if (board[tx][ty].value != EMPTY) break;
+            tx += dx[i];
+            ty += dy[i];
+        }
     }
 }
 
