@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -34,7 +33,6 @@ typedef struct {
 } vec2;
 
 piece board[BOARD_SIZE][BOARD_SIZE];
-SDL_Texture** current_piece;
 
 const int UNIT = 32;
 
@@ -43,7 +41,7 @@ bool black_turn = true;
 int selected_x, selected_y;
 
 SDL_Rect r;
-SDL_Texture** current_piece;
+SDL_Texture* current_piece;
 
 SDL_Texture *L_BLACK_PAWN;
 SDL_Texture *L_WHITE_PAWN;
@@ -226,7 +224,7 @@ void draw( SDL_Renderer* render ) {
 
             int_to_sprite( board[i][j].value );
             if ( current_piece != NULL )
-                SDL_RenderCopy( render, *current_piece, NULL, &r );
+                SDL_RenderCopy( render, current_piece, NULL, &r );
         }
     }
 
@@ -300,18 +298,18 @@ void destroy() {
 
 void int_to_sprite( int piece ) {
     switch (piece) {
-        case -1: current_piece = &L_BLACK_TOWER;   break;  
-        case  1: current_piece = &L_WHITE_TOWER;   break;
-        case -2: current_piece = &L_BLACK_PRIEST;  break;
-        case  2: current_piece = &L_WHITE_PRIEST;  break;
-        case -3: current_piece = &L_BLACK_HORSE;   break;
-        case  3: current_piece = &L_WHITE_HORSE;   break;
-        case -4: current_piece = &L_BLACK_KING;    break;
-        case  4: current_piece = &L_WHITE_KING;    break;
-        case -5: current_piece = &L_BLACK_QUEEN;   break;
-        case  5: current_piece = &L_WHITE_QUEEN;   break;
-        case -6: current_piece = &L_BLACK_PAWN;    break;
-        case  6: current_piece = &L_WHITE_PAWN;    break;
+        case -1: current_piece = L_BLACK_TOWER;   break;  
+        case  1: current_piece = L_WHITE_TOWER;   break;
+        case -2: current_piece = L_BLACK_PRIEST;  break;
+        case  2: current_piece = L_WHITE_PRIEST;  break;
+        case -3: current_piece = L_BLACK_HORSE;   break;
+        case  3: current_piece = L_WHITE_HORSE;   break;
+        case -4: current_piece = L_BLACK_KING;    break;
+        case  4: current_piece = L_WHITE_KING;    break;
+        case -5: current_piece = L_BLACK_QUEEN;   break;
+        case  5: current_piece = L_WHITE_QUEEN;   break;
+        case -6: current_piece = L_BLACK_PAWN;    break;
+        case  6: current_piece = L_WHITE_PAWN;    break;
         default: current_piece = NULL;
     }
 }
